@@ -3,6 +3,7 @@ package Model;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Timeline {
 
@@ -68,6 +69,18 @@ public class Timeline {
         return -1;
     }
 
+    public int nextDeadlineFor(RTProcess proc,int position){
+        if(position > maxLength) return -1;
+
+        for (int i = position; i<this.maxLength-1;i++) {
+            // la siguiente unidad que sea deadline de proc
+            Unit u = this.periods.get(i);
+            if(!u.deadLineOf.stream().anyMatch(p -> p.getId() == proc.getId()))
+                return i;
+        }
+        return -1;
+    }
+
     public boolean executeToCompletion(int startTime,RTProcess process){
         // si el deadline está antes de que se pueda completar la tarea no se ejecuta
         if(this.periods.subList(startTime, startTime + process.getExecutiontTime())
@@ -76,8 +89,37 @@ public class Timeline {
         }
         for (int i = 0; i < process.getExecutiontTime(); i++) {
             this.periods.get(startTime+i).assignedTo = process;
+            process.execute();
         }
         return true;
+    }
+
+    public int nextCycle(int position){
+        if(position > maxLength) return -1;
+
+        for (int i = position; i<this.maxLength-1;i++) {
+            // la siguiente unidad que sea ciclo de alguien
+            Unit u = this.periods.get(i);
+            if(!u.cycleOf.isEmpty())
+                return i;
+        }
+        return -1;
+    }
+
+    public List<RTProcess> advanceTo(int t, List<RTProcess> processes){
+        return processes.stream().map(p -> {
+            int prevCycle = Math.floorDiv(t, p.getCycle());
+            int nextCycle = prevCycle + p.getCycle();
+            // si entre el ciclo anterior y el siguiente no se ha ejecutado un proceso, reflejarlo
+            if(this.periods.subList(prevCycle,nextCycle).stream().anyMatch(
+                    u -> u.assignedTo.getId() == p.getId()
+            )){
+                p.setHasExecutedActualCycle(true);
+            } else {
+                p.setHasExecutedActualCycle(false);
+            }
+            return p;
+        }).collect(Collectors.toList());
     }
 
     public boolean addProcessMarks(RTProcess process){
@@ -85,4 +127,7 @@ public class Timeline {
         return true;
     }
 
+    public int getMaxLength() {
+        return maxLength;
+    }
 }
