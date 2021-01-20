@@ -52,11 +52,11 @@ public class RTProcess {
     }
 
     public void missDeadline(){
-        this.executedPeriods++;
+        this.missedDealines++;
     }
 
     public void missPeriod(){
-        this.executedPeriods++;
+        this.missedPeriods++;
     }
 
     public void setHasExecutedActualCycle(boolean hasExecutedActualCycle) {

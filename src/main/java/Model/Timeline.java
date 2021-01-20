@@ -39,6 +39,10 @@ public class Timeline {
             //If more than one process have the same deadline, the one with shortest period is prioritized
             this.deadLineOf.sort(Comparator.comparingInt(RTProcess::getCycle));
         }
+
+        public RTProcess getAssignedTo() {
+            return assignedTo;
+        }
     }
 
     private int maxLength;
@@ -56,7 +60,8 @@ public class Timeline {
         return maxLength;
     }
 
-    public int nextDeadline(int position){
+    /** Retorna el id del proceso que tiene el próximo deadline */
+    public int nextDeadlineId(int position){
         // esto es que el siguiente deadline se sobrepaso
         if(position > maxLength) return -1;
 
@@ -69,31 +74,79 @@ public class Timeline {
         return -1;
     }
 
+    public int nextDeadlineTime(int position){
+        // esto es que el siguiente deadline se sobrepaso
+        if(position > maxLength) return -1;
+
+        for (int i = position; i < maxLength; i++) {
+            // la siguiente unidad que sea deadline de alguien
+            Unit u = this.periods.get(i);
+            if(!u.deadLineOf.isEmpty())
+                return i;
+        }
+        // al haber revisado todos, el tiempo restante el sistema va a permanecer idle
+        return -1;
+    }
+
     public int nextDeadlineFor(RTProcess proc,int position){
         if(position > maxLength) return -1;
 
         for (int i = position; i<this.maxLength-1;i++) {
             // la siguiente unidad que sea deadline de proc
             Unit u = this.periods.get(i);
-            if(!u.deadLineOf.stream().anyMatch(p -> p.getId() == proc.getId()))
+            if(u.deadLineOf.stream().anyMatch(p -> p.getId() == proc.getId()))
                 return i;
         }
         return -1;
     }
 
     public boolean executeToCompletion(int startTime,RTProcess process){
+        //si se excede el limite ni vrga
+        if(startTime + process.getExecutiontTime() > maxLength){
+            return false;
+        }
         // si el deadline está antes de que se pueda completar la tarea no se ejecuta
-        if(this.periods.subList(startTime, startTime + process.getExecutiontTime())
-            .stream().anyMatch(u -> u.deadLineOf.contains(process))){
+        if(this.periods.subList(startTime, startTime + process.getExecutiontTime()-1)
+            .stream().anyMatch(u -> u.deadLineOf.stream().filter(un -> un == process).findFirst().orElse(null) != null)){
+            process.missDeadline();
+            // si en el periodo aun da tiempo de hacerla se hace? de momento asumamos que no
+            process.missPeriod();
             return false;
         }
         for (int i = 0; i < process.getExecutiontTime(); i++) {
             this.periods.get(startTime+i).assignedTo = process;
+        }
+        process.execute();
+        return true;
+    }
+
+    public boolean executeUnits(int startTime, int units, RTProcess process){
+        if(startTime + units > maxLength || units > process.getExecutiontTime()){
+            return false;
+        }
+        if(this.periods.subList(startTime, startTime + units)
+                .stream().anyMatch(u -> periods.get(startTime) != u && u.deadLineOf.stream().filter(un -> un == process).findFirst().orElse(null) != null)) {
+            process.missDeadline();
+            // si en el periodo aun da tiempo de hacerla se hace? de momento asumamos que no
+            process.missPeriod();
+            return false;
+        }
+        for (int i = 0; i < units; i++) {
+            this.periods.get(startTime+i).assignedTo = process;
+        }
+        int prevCycle = Math.floorDiv(startTime, process.getCycle()) * process.getCycle();
+        int nextCycle = prevCycle + process.getCycle();
+        //Si las unidades ejecutadas fueron las que hacian falta
+        if(this.periods.subList(prevCycle, Math.min(nextCycle, maxLength)).stream().filter(
+                u -> u.assignedTo != null && u.assignedTo.getId() == process.getId()
+        ).count() >= process.getExecutiontTime()){
             process.execute();
+            process.setHasExecutedActualCycle(true);
         }
         return true;
     }
 
+    /** Retorna el tiempo en que se da el siguiente ciclo */
     public int nextCycle(int position){
         if(position > maxLength) return -1;
 
@@ -103,17 +156,19 @@ public class Timeline {
             if(!u.cycleOf.isEmpty())
                 return i;
         }
-        return -1;
+        return maxLength;
     }
 
     public List<RTProcess> advanceTo(int t, List<RTProcess> processes){
+        //nothing to do
+        if(t >= maxLength) return processes;
         return processes.stream().map(p -> {
-            int prevCycle = Math.floorDiv(t, p.getCycle());
+            int prevCycle = Math.floorDiv(t, p.getCycle()) * p.getCycle();
             int nextCycle = prevCycle + p.getCycle();
             // si entre el ciclo anterior y el siguiente no se ha ejecutado un proceso, reflejarlo
-            if(this.periods.subList(prevCycle,nextCycle).stream().anyMatch(
-                    u -> u.assignedTo.getId() == p.getId()
-            )){
+            if(this.periods.subList(prevCycle, Math.min(nextCycle, maxLength)).stream().filter(
+                    u -> u.assignedTo != null && u.assignedTo.getId() == p.getId()
+            ).count() >= p.getExecutiontTime()){
                 p.setHasExecutedActualCycle(true);
             } else {
                 p.setHasExecutedActualCycle(false);
@@ -123,11 +178,20 @@ public class Timeline {
     }
 
     public boolean addProcessMarks(RTProcess process){
-        //todo por cada cyclo añadir el marcador y deadline correspondientes
+        for (int i = process.getCycle(); i < maxLength; i += process.getCycle()) {
+            periods.get(i).addCycle(process);
+        }
+        for (int i = process.getDeadline(); i < maxLength; i += process.getDeadline()) {
+            periods.get(i).addDeadLine(process);
+        }
         return true;
     }
 
     public int getMaxLength() {
         return maxLength;
+    }
+
+    public List<Unit> getPeriods() {
+        return periods;
     }
 }

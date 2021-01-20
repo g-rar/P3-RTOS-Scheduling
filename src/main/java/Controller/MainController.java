@@ -54,6 +54,7 @@ public class MainController {
     public void schedule() throws Exception {
         if(this.config == null) throw new Exception("Config required for updating timeline");
         if(this.processes.isEmpty()) throw new Exception("There are no processes to schedule");
+        this.processScheduler.schedule(timeline, processes, config.timeLimit);
         //todo execute the scheduling algorithms, such that the resulting timeline and process statistics are in this object
     }
 

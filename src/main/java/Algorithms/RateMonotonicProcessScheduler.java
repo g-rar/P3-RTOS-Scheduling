@@ -16,12 +16,15 @@ public class RateMonotonicProcessScheduler extends ProcessScheduler {
         int actualtime = 0;
         int processExecIndex = 0;
         while(actualtime < timeline.getMaxLength()){
-            actualtime += sortedProcesses.get(processExecIndex).getExecutiontTime();
-            timeline.executeToCompletion(actualtime, sortedProcesses.get(processExecIndex));
-            sortedProcesses = timeline.advanceTo(actualtime, sortedProcesses);
-            int nextProc = getNextProc(sortedProcesses);
+            int nextProc = -1;
+            if(timeline.executeToCompletion(actualtime, sortedProcesses.get(processExecIndex))){
+                actualtime += sortedProcesses.get(processExecIndex).getExecutiontTime();
+                sortedProcesses = timeline.advanceTo(actualtime, sortedProcesses);
+                nextProc = getNextProc(sortedProcesses);
+            }
             if(nextProc == -1){
-                actualtime = timeline.nextCycle(actualtime);
+                actualtime = timeline.nextCycle(actualtime)+1;
+                sortedProcesses = timeline.advanceTo(actualtime, sortedProcesses);
                 nextProc = getNextProc(sortedProcesses);
             }
             processExecIndex = nextProc;
