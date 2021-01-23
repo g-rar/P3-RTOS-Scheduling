@@ -38,6 +38,18 @@ public class RTProcess {
         return executiontTime / cycle;
     }
 
+    public int getMissedDealines() {
+        return missedDealines;
+    }
+
+    public int getExecutedPeriods() {
+        return executedPeriods;
+    }
+
+    public int getMissedPeriods() {
+        return missedPeriods;
+    }
+
     public boolean hasExecutedActualCycle() {
         return hasExecutedActualCycle;
     }

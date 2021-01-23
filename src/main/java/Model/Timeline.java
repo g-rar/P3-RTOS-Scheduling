@@ -43,6 +43,14 @@ public class Timeline {
         public RTProcess getAssignedTo() {
             return assignedTo;
         }
+
+        public List<RTProcess> getDeadLineOf(){
+            return deadLineOf;
+        }
+
+        public List<RTProcess> getCycleOf() {
+            return cycleOf;
+        }
     }
 
     private int maxLength;
@@ -181,7 +189,7 @@ public class Timeline {
         for (int i = process.getCycle(); i < maxLength; i += process.getCycle()) {
             periods.get(i).addCycle(process);
         }
-        for (int i = process.getDeadline(); i < maxLength; i += process.getDeadline()) {
+        for (int i = process.getDeadline(); i < maxLength; i += process.getCycle()) {
             periods.get(i).addDeadLine(process);
         }
         return true;

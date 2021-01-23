@@ -58,6 +58,19 @@ public class MainController {
         //todo execute the scheduling algorithms, such that the resulting timeline and process statistics are in this object
     }
 
+    public void reset(){
+        List<RTProcess> newProcesses = new ArrayList<>();
+        for(RTProcess p : this.processes){
+            newProcesses.add(new RTProcess(p.getCycle(), p.getDeadline(), p.getExecutiontTime(), p.getId()));
+        }
+        this.processes = newProcesses;
+        try {
+            this.updateTimeline();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     //GETTERS
 
     public Config getConfig() {
