@@ -9,7 +9,7 @@ public class RTProcess {
     private int missedDealines = 0;
     private int executedPeriods = 0;
     private int missedPeriods = 0;
-
+    private boolean hasExecutedActualCycle = false;
 
     public RTProcess(int cycle, int deadline, int executiontTime, int id){
         this.cycle = cycle;
@@ -36,5 +36,30 @@ public class RTProcess {
 
     public float getUssage(){
         return executiontTime / cycle;
+    }
+
+    public boolean hasExecutedActualCycle() {
+        return hasExecutedActualCycle;
+    }
+
+    public void execute(){
+        this.executedPeriods++;
+        this.hasExecutedActualCycle = true;
+    }
+
+    public void startCycle(){
+        this.hasExecutedActualCycle = false;
+    }
+
+    public void missDeadline(){
+        this.missedDealines++;
+    }
+
+    public void missPeriod(){
+        this.missedPeriods++;
+    }
+
+    public void setHasExecutedActualCycle(boolean hasExecutedActualCycle) {
+        this.hasExecutedActualCycle = hasExecutedActualCycle;
     }
 }
