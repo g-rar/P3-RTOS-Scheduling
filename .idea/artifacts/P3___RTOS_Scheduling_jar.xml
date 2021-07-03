@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="P3 - RTOS Scheduling:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/P3___RTOS_Scheduling_jar</output-path>
+    <root id="archive" name="P3 - RTOS Scheduling.jar">
+      <element id="module-output" name="P3 - RTOS Scheduling" />
+      <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/apache/commons/commons-csv/1.8/commons-csv-1.8.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
